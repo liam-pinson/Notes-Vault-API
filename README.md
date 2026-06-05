@@ -524,7 +524,9 @@ Expected response `404 Not Found` — confirms the note was permanently deleted:
 
 > **DB Browser:** The `notes` table should still show only one row (Work Tasks). The Shopping List row is permanently gone — confirming both the API and the database agree the note no longer exists.
 
-# API ENDPOINTS
+---
+## API ENDPOINTS
+---
 
 ### Register a user
 
