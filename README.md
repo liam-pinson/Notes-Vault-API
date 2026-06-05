@@ -67,17 +67,34 @@ pytest tests/ -v
 
 Tests use an isolated test database that is created fresh before each test and torn down after. No `.env` file or running server is needed — just install dependencies and run the command above. Your real database is never touched.
 
-## API Usage Examples
+## How to Test the API
 
-> The interactive API docs at `http://localhost:8000/docs` can also be used to test all endpoints directly in the browser.
+There are three ways to run any request in this documentation:
+
+**Option A — Postman (Recommended):** Import `notes-vault-postman-collection.json` into Postman. Every endpoint is pre-configured with the correct method, headers, and body. The Login request auto-saves your token and the Create Note request auto-saves the note ID — no manual copy-pasting needed. See the [Postman Collection](#postman-collection) section for setup instructions.
+
+**Option B — Git Bash / Mac Terminal:** Copy the `curl` commands exactly as written under each endpoint. The backslash line continuations and single quotes work natively in Git Bash and Mac/Linux terminals. On Windows, open **Git Bash** from the Start menu (installed with Git) and paste the commands directly.
+
+**Option C — Browser Docs:** Visit `http://localhost:8000/docs` while the server is running. FastAPI generates an interactive Swagger UI where you can authorize with your token and run every endpoint directly in the browser without any additional tooling.
+
+> **Windows PowerShell note:** The curl commands as written will not work in PowerShell due to differences in quote handling. Use Git Bash, Postman, or the `/docs` page instead.
+
+---
+
+## API Usage Examples
 
 ### Register a user
 
+**Postman:** `POST Register` in the Auth folder — body is pre-filled.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username": "liam", "password": "securepass123"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → `POST /auth/register` → Try it out
 
 Expected response `201 Created`:
 ```json
@@ -92,11 +109,16 @@ Expected response `201 Created`:
 
 ### Get a token
 
+**Postman:** `POST Login` in the Auth folder — token is saved to `{{token}}` automatically after sending.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/auth/token \
   -F "username=liam" \
   -F "password=securepass123"
 ```
+
+**Browser:** `http://localhost:8000/docs` → `POST /auth/token` → Try it out
 
 Expected response `200 OK`:
 ```json
@@ -112,12 +134,17 @@ Expected response `200 OK`:
 
 ### Create a note
 
+**Postman:** `POST Create Note` in the Notes folder — note ID is saved to `{{note_id}}` automatically after sending.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"title": "Shopping", "content": "Buy milk"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize with your token → `POST /notes/` → Try it out
 
 Expected response `201 Created`:
 ```json
@@ -137,10 +164,15 @@ Expected response `201 Created`:
 
 ### List all notes
 
+**Postman:** `GET List Notes` in the Notes folder.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out
 
 Expected response `200 OK`:
 ```json
@@ -163,10 +195,15 @@ Expected response `200 OK`:
 
 ### Search notes
 
+**Postman:** `GET Search Notes` in the Notes folder — change the `search` query param value as needed.
+
+**Git Bash / Terminal:**
 ```bash
 curl "http://localhost:8000/notes/?search=milk" \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out → enter search term
 
 Expected response `200 OK` — returns only notes matching the search term in title or content:
 ```json
@@ -189,10 +226,15 @@ Expected response `200 OK` — returns only notes matching the search term in ti
 
 ### Get a note by ID
 
+**Postman:** `GET Get Note by ID` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/{note_id}` → Try it out → enter note ID
 
 Expected response `200 OK`:
 ```json
@@ -217,12 +259,17 @@ Returns `404 Not Found` if the note does not exist or belongs to another user:
 
 ### Update a note
 
+**Postman:** `PATCH Update Note` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X PATCH http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"content": "Updated content"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `PATCH /notes/{note_id}` → Try it out
 
 Expected response `200 OK` — only the fields you sent are updated, everything else remains unchanged. Notice `updated_at` is now later than `created_at`:
 ```json
@@ -240,10 +287,15 @@ Expected response `200 OK` — only the fields you sent are updated, everything 
 
 ### Delete a note
 
+**Postman:** `DELETE Delete Note` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X DELETE http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `DELETE /notes/{note_id}` → Try it out
 
 Expected response `204 No Content` — no response body is returned. A subsequent `GET` on the same `<note_id>` will return `404 Not Found`.
 
@@ -262,7 +314,7 @@ A pre-built Postman collection is included in the repository at `notes-vault-pos
 
 ### Environment Setup
 
-The collection uses two variables that are populated automatically by scripts — no manual copy-pasting required:
+The collection uses variables that are populated automatically by scripts — no manual copy-pasting required:
 
 | Variable | Set By | Used By |
 |---|---|---|
@@ -285,11 +337,20 @@ Create an environment in Postman called `Notes Vault Local`, add `baseUrl` with 
 
 A complete run-through of every endpoint in the order a real user would use them. Run these in sequence after starting the server.
 
+> **How to run each step:** Use **Postman** (import `notes-vault-postman-collection.json`), **Git Bash / Mac Terminal** (copy the curl commands as written), or the **browser docs** at `http://localhost:8000/docs`. PowerShell users should use Postman or the browser docs.
+
+---
+
 ### Step 1 — Confirm the server is running
 
+**Postman:** `GET Health Check` in the Health folder.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/health
 ```
+
+**Browser:** Visit `http://localhost:8000/health` directly
 
 Expected response `200 OK`:
 ```json
@@ -300,11 +361,16 @@ Expected response `200 OK`:
 
 ### Step 2 — Register a new account
 
+**Postman:** `POST Register` in the Auth folder.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username": "liam", "password": "securepass123"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → `POST /auth/register` → Try it out
 
 Expected response `201 Created`:
 ```json
@@ -319,11 +385,16 @@ Expected response `201 Created`:
 
 ### Step 3 — Login and get a token
 
+**Postman:** `POST Login` in the Auth folder — token saves to `{{token}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/auth/token \
   -F "username=liam" \
   -F "password=securepass123"
 ```
+
+**Browser:** `http://localhost:8000/docs` → `POST /auth/token` → Try it out
 
 Expected response `200 OK`:
 ```json
@@ -339,9 +410,14 @@ Expected response `200 OK`:
 
 ### Step 4 — Confirm auth is required (no token)
 
+**Postman:** `GET Get Note - No Token (401)` in the Validation Tests folder.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/
 ```
+
+**Browser:** `http://localhost:8000/docs` → `GET /notes/` → Try it out (without authorizing)
 
 Expected response `401 Unauthorized` — confirms protected routes are locked without a token:
 ```json
@@ -354,12 +430,17 @@ Expected response `401 Unauthorized` — confirms protected routes are locked wi
 
 ### Step 5 — Create your first note
 
+**Postman:** `POST Create Note` in the Notes folder — note ID saves to `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"title": "Shopping List", "content": "Buy milk, eggs, and bread"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `POST /notes/` → Try it out
 
 Expected response `201 Created`:
 ```json
@@ -379,12 +460,17 @@ Expected response `201 Created`:
 
 ### Step 6 — Create a second note
 
+**Postman:** `POST Create Note` again with a different body.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"title": "Work Tasks", "content": "Finish the API project"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `POST /notes/` → Try it out
 
 Expected response `201 Created`:
 ```json
@@ -402,10 +488,15 @@ Expected response `201 Created`:
 
 ### Step 7 — List all notes
 
+**Postman:** `GET List Notes` in the Notes folder.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out
 
 Expected response `200 OK` — both notes returned, most recent first:
 ```json
@@ -436,10 +527,15 @@ Expected response `200 OK` — both notes returned, most recent first:
 
 ### Step 8 — Search notes by keyword
 
+**Postman:** `GET Search Notes` in the Notes folder — change the `search` param value as needed.
+
+**Git Bash / Terminal:**
 ```bash
 curl "http://localhost:8000/notes/?search=milk" \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out → enter `milk` in the search field
 
 Expected response `200 OK` — only the Shopping List note matches, Work Tasks is excluded:
 ```json
@@ -462,10 +558,15 @@ Expected response `200 OK` — only the Shopping List note matches, Work Tasks i
 
 ### Step 9 — Get a specific note by ID
 
+**Postman:** `GET Get Note by ID` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/{note_id}` → Try it out → enter note ID
 
 Expected response `200 OK`:
 ```json
@@ -483,14 +584,19 @@ Expected response `200 OK`:
 
 ### Step 10 — Update a note (partial update)
 
-Only send the fields you want to change. The title is not sent here so it stays unchanged:
+Only send the fields you want to change. The title is not sent here so it stays unchanged.
 
+**Postman:** `PATCH Update Note` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X PATCH http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"content": "Buy milk, eggs, bread, and coffee"}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `PATCH /notes/{note_id}` → Try it out
 
 Expected response `200 OK` — content updated, title unchanged, `updated_at` is now later than `created_at`:
 ```json
@@ -508,12 +614,17 @@ Expected response `200 OK` — content updated, title unchanged, `updated_at` is
 
 ### Step 11 — Test validation (empty content)
 
+**Postman:** `POST Create Note - Empty Content (422)` in the Validation Tests folder.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>" \
   -H "Content-Type: application/json" \
   -d '{"content": ""}'
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `POST /notes/` → Try it out → send empty content
 
 Expected response `422 Unprocessable Entity` — Pydantic rejects empty content before it reaches the database:
 ```json
@@ -534,14 +645,18 @@ Expected response `422 Unprocessable Entity` — Pydantic rejects empty content 
 
 Register a second user:
 
+**Postman:** `POST Register` with a different username in the body.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username": "intruder", "password": "securepass123"}'
 ```
 
-Login as the second user and save their token:
+Login as the second user — their token will now be saved in `{{token}}` in Postman:
 
+**Git Bash / Terminal:**
 ```bash
 curl -X POST http://localhost:8000/auth/token \
   -F "username=intruder" \
@@ -550,6 +665,9 @@ curl -X POST http://localhost:8000/auth/token \
 
 Try to access the first user's note using the intruder's token:
 
+**Postman:** `GET Get Note by ID` — `{{note_id}}` still points to the first user's note.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <intruder_token>"
@@ -566,12 +684,17 @@ Expected response `404 Not Found` — the intruder has a valid token but cannot 
 
 ### Step 13 — Delete a note
 
-Log back in as `liam` to get your token back, then:
+Log back in as `liam` to restore your original token, then:
 
+**Postman:** `POST Login` as `liam` to restore `{{token}}`, then `DELETE Delete Note`.
+
+**Git Bash / Terminal:**
 ```bash
 curl -X DELETE http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `DELETE /notes/{note_id}` → Try it out
 
 Expected response `204 No Content` — no response body returned.
 
@@ -579,10 +702,15 @@ Expected response `204 No Content` — no response body returned.
 
 ### Step 14 — Confirm the note is gone
 
+**Postman:** `GET Get Note by ID` — should now return 404.
+
+**Git Bash / Terminal:**
 ```bash
 curl http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/{note_id}` → Try it out → enter the deleted note ID
 
 Expected response `404 Not Found` — confirms the note was permanently deleted:
 ```json
