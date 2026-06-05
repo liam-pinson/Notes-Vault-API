@@ -113,11 +113,44 @@ Create an environment in Postman called `Notes Vault Local`, add `baseUrl` with 
 
 ---
 
+## Viewing the Database with DB Browser for SQLite
+
+DB Browser for SQLite is a free desktop tool that lets you inspect the database visually as you make API calls — useful for confirming data is being written, updated, and deleted correctly.
+
+### Installation
+
+Download and install from: `https://sqlitebrowser.org/dl/`
+
+### Opening the Database
+
+1. Open DB Browser for SQLite
+2. Click **Open Database** in the top toolbar
+3. Navigate to your project folder and open `data/notes.db`
+4. Click the **Browse Data** tab at the top
+5. Use the **Table** dropdown to switch between the `users` and `notes` tables
+
+### Refreshing the View
+
+DB Browser shows a snapshot of the database at the moment you opened it. It does not update live. After each API call, press `Ctrl+R` or go to **File → Revert** to reload the latest data from disk.
+
+### What to Look For
+
+| Table | What you should see |
+|---|---|
+| `users` | A row per registered user — `id`, `username`, `hashed_password`, `created_at` |
+| `notes` | A row per created note — `id`, `title`, `content`, `created_at`, `updated_at`, `owner_id` |
+
+> **Note:** The `hashed_password` column will show a long bcrypt string like `$2b$12$...` — never the raw password. This confirms passwords are stored securely.
+
+---
+
 ## End-to-End Walkthrough
 
 A complete run-through of every endpoint in the order a real user would use them. Run these in sequence after starting the server.
 
 > **How to run each step:** Use **Postman** (import `notes-vault-postman-collection.json`), **Git Bash / Mac Terminal** (copy the curl commands as written), or the **browser docs** at `http://localhost:8000/docs`. PowerShell users should use Postman or the browser docs.
+
+> **Viewing the database:** Open `data/notes.db` in DB Browser for SQLite before starting. After each step that creates, updates, or deletes data, press `Ctrl+R` in DB Browser to refresh and confirm the change is reflected on disk.
 
 ---
 
@@ -161,9 +194,7 @@ Expected response `201 Created`:
 }
 ```
 
----
-
-### Step 3 — Login and get a token
+> **DB Browser:** Press `Ctrl+R` to refresh → open the `users` table → you should see a new row for `liam` with a hashed password in the `hashed_password` column, confirming the user was saved to disk.
 
 **Postman:** `POST Login` in the Auth folder — token saves to `{{token}}` automatically.
 
@@ -236,9 +267,7 @@ Expected response `201 Created`:
 
 > Save the `id` value and replace `<note_id>` with it in the steps below.
 
----
-
-### Step 6 — Create a second note
+> **DB Browser:** Press `Ctrl+R` to refresh → open the `notes` table → you should see a new row with the title "Shopping List", the content, and an `owner_id` matching the user ID from Step 2.
 
 **Postman:** `POST Create Note` again with a different body.
 
@@ -264,9 +293,7 @@ Expected response `201 Created`:
 }
 ```
 
----
-
-### Step 7 — List all notes
+> **DB Browser:** Press `Ctrl+R` to refresh → open the `notes` table → you should now see two rows, one for each note, both with the same `owner_id`.
 
 **Postman:** `GET List Notes` in the Notes folder.
 
@@ -390,9 +417,7 @@ Expected response `200 OK` — content updated, title unchanged, `updated_at` is
 }
 ```
 
----
-
-### Step 11 — Test validation (empty content)
+> **DB Browser:** Press `Ctrl+R` to refresh → open the `notes` table → find the Shopping List row and confirm the `content` column now shows the updated text and `updated_at` is a later timestamp than `created_at`.
 
 **Postman:** `POST Create Note - Empty Content (422)` in the Validation Tests folder.
 
@@ -434,7 +459,7 @@ curl -X POST http://localhost:8000/auth/register \
   -d '{"username": "intruder", "password": "securepass123"}'
 ```
 
-Login as the second user — their token will now be saved in `{{token}}` in Postman:
+> **DB Browser:** Press `Ctrl+R` to refresh → open the `users` table → you should now see two rows, one for `liam` and one for `intruder`.
 
 **Git Bash / Terminal:**
 ```bash
@@ -478,9 +503,7 @@ curl -X DELETE http://localhost:8000/notes/<note_id> \
 
 Expected response `204 No Content` — no response body returned.
 
----
-
-### Step 14 — Confirm the note is gone
+> **DB Browser:** Press `Ctrl+R` to refresh → open the `notes` table → the Shopping List row should be gone. Only the Work Tasks note remains.
 
 **Postman:** `GET Get Note by ID` — should now return 404.
 
@@ -499,9 +522,7 @@ Expected response `404 Not Found` — confirms the note was permanently deleted:
 }
 ```
 
----
-
-## API Usage Examples
+> **DB Browser:** The `notes` table should still show only one row (Work Tasks). The Shopping List row is permanently gone — confirming both the API and the database agree the note no longer exists.
 
 ### Register a user
 
