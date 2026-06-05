@@ -81,226 +81,6 @@ There are three ways to run any request in this documentation:
 
 ---
 
-## API Usage Examples
-
-### Register a user
-
-**Postman:** `POST Register` in the Auth folder — body is pre-filled.
-
-**Git Bash / Terminal:**
-```bash
-curl -X POST http://localhost:8000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username": "liam", "password": "securepass123"}'
-```
-
-**Browser:** `http://localhost:8000/docs` → `POST /auth/register` → Try it out
-
-Expected response `201 Created`:
-```json
-{
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "username": "liam",
-    "created_at": "2024-01-01T00:00:00"
-}
-```
-
----
-
-### Get a token
-
-**Postman:** `POST Login` in the Auth folder — token is saved to `{{token}}` automatically after sending.
-
-**Git Bash / Terminal:**
-```bash
-curl -X POST http://localhost:8000/auth/token \
-  -F "username=liam" \
-  -F "password=securepass123"
-```
-
-**Browser:** `http://localhost:8000/docs` → `POST /auth/token` → Try it out
-
-Expected response `200 OK`:
-```json
-{
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer"
-}
-```
-
-> Save the `access_token` value — this is your `<your_token>` for all subsequent requests. It expires after 30 minutes, after which you will need to call this endpoint again.
-
----
-
-### Create a note
-
-**Postman:** `POST Create Note` in the Notes folder — note ID is saved to `{{note_id}}` automatically after sending.
-
-**Git Bash / Terminal:**
-```bash
-curl -X POST http://localhost:8000/notes/ \
-  -H "Authorization: Bearer <your_token>" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Shopping", "content": "Buy milk"}'
-```
-
-**Browser:** `http://localhost:8000/docs` → Authorize with your token → `POST /notes/` → Try it out
-
-Expected response `201 Created`:
-```json
-{
-    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
-    "title": "Shopping",
-    "content": "Buy milk",
-    "created_at": "2024-01-01T00:00:00",
-    "updated_at": "2024-01-01T00:00:00",
-    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
-> Save the `id` value — this is your `<note_id>` for get, update, and delete requests.
-
----
-
-### List all notes
-
-**Postman:** `GET List Notes` in the Notes folder.
-
-**Git Bash / Terminal:**
-```bash
-curl http://localhost:8000/notes/ \
-  -H "Authorization: Bearer <your_token>"
-```
-
-**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out
-
-Expected response `200 OK`:
-```json
-{
-    "total": 1,
-    "notes": [
-        {
-            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
-            "title": "Shopping",
-            "content": "Buy milk",
-            "created_at": "2024-01-01T00:00:00",
-            "updated_at": "2024-01-01T00:00:00",
-            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-        }
-    ]
-}
-```
-
----
-
-### Search notes
-
-**Postman:** `GET Search Notes` in the Notes folder — change the `search` query param value as needed.
-
-**Git Bash / Terminal:**
-```bash
-curl "http://localhost:8000/notes/?search=milk" \
-  -H "Authorization: Bearer <your_token>"
-```
-
-**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out → enter search term
-
-Expected response `200 OK` — returns only notes matching the search term in title or content:
-```json
-{
-    "total": 1,
-    "notes": [
-        {
-            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
-            "title": "Shopping",
-            "content": "Buy milk",
-            "created_at": "2024-01-01T00:00:00",
-            "updated_at": "2024-01-01T00:00:00",
-            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-        }
-    ]
-}
-```
-
----
-
-### Get a note by ID
-
-**Postman:** `GET Get Note by ID` in the Notes folder — uses `{{note_id}}` automatically.
-
-**Git Bash / Terminal:**
-```bash
-curl http://localhost:8000/notes/<note_id> \
-  -H "Authorization: Bearer <your_token>"
-```
-
-**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/{note_id}` → Try it out → enter note ID
-
-Expected response `200 OK`:
-```json
-{
-    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
-    "title": "Shopping",
-    "content": "Buy milk",
-    "created_at": "2024-01-01T00:00:00",
-    "updated_at": "2024-01-01T00:00:00",
-    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
-Returns `404 Not Found` if the note does not exist or belongs to another user:
-```json
-{
-    "detail": "Note not found"
-}
-```
-
----
-
-### Update a note
-
-**Postman:** `PATCH Update Note` in the Notes folder — uses `{{note_id}}` automatically.
-
-**Git Bash / Terminal:**
-```bash
-curl -X PATCH http://localhost:8000/notes/<note_id> \
-  -H "Authorization: Bearer <your_token>" \
-  -H "Content-Type: application/json" \
-  -d '{"content": "Updated content"}'
-```
-
-**Browser:** `http://localhost:8000/docs` → Authorize → `PATCH /notes/{note_id}` → Try it out
-
-Expected response `200 OK` — only the fields you sent are updated, everything else remains unchanged. Notice `updated_at` is now later than `created_at`:
-```json
-{
-    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
-    "title": "Shopping",
-    "content": "Updated content",
-    "created_at": "2024-01-01T00:00:00",
-    "updated_at": "2024-01-01T00:01:00",
-    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
----
-
-### Delete a note
-
-**Postman:** `DELETE Delete Note` in the Notes folder — uses `{{note_id}}` automatically.
-
-**Git Bash / Terminal:**
-```bash
-curl -X DELETE http://localhost:8000/notes/<note_id> \
-  -H "Authorization: Bearer <your_token>"
-```
-
-**Browser:** `http://localhost:8000/docs` → Authorize → `DELETE /notes/{note_id}` → Try it out
-
-Expected response `204 No Content` — no response body is returned. A subsequent `GET` on the same `<note_id>` will return `404 Not Found`.
-
----
-
 ## Postman Collection
 
 A pre-built Postman collection is included in the repository at `notes-vault-postman-collection.json`. It includes every endpoint with correct methods, headers, request bodies, and expected responses pre-configured.
@@ -718,6 +498,226 @@ Expected response `404 Not Found` — confirms the note was permanently deleted:
     "detail": "Note not found"
 }
 ```
+
+---
+
+## API Usage Examples
+
+### Register a user
+
+**Postman:** `POST Register` in the Auth folder — body is pre-filled.
+
+**Git Bash / Terminal:**
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "liam", "password": "securepass123"}'
+```
+
+**Browser:** `http://localhost:8000/docs` → `POST /auth/register` → Try it out
+
+Expected response `201 Created`:
+```json
+{
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "username": "liam",
+    "created_at": "2024-01-01T00:00:00"
+}
+```
+
+---
+
+### Get a token
+
+**Postman:** `POST Login` in the Auth folder — token is saved to `{{token}}` automatically after sending.
+
+**Git Bash / Terminal:**
+```bash
+curl -X POST http://localhost:8000/auth/token \
+  -F "username=liam" \
+  -F "password=securepass123"
+```
+
+**Browser:** `http://localhost:8000/docs` → `POST /auth/token` → Try it out
+
+Expected response `200 OK`:
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "bearer"
+}
+```
+
+> Save the `access_token` value — this is your `<your_token>` for all subsequent requests. It expires after 30 minutes, after which you will need to call this endpoint again.
+
+---
+
+### Create a note
+
+**Postman:** `POST Create Note` in the Notes folder — note ID is saved to `{{note_id}}` automatically after sending.
+
+**Git Bash / Terminal:**
+```bash
+curl -X POST http://localhost:8000/notes/ \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Shopping", "content": "Buy milk"}'
+```
+
+**Browser:** `http://localhost:8000/docs` → Authorize with your token → `POST /notes/` → Try it out
+
+Expected response `201 Created`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping",
+    "content": "Buy milk",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:00:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+> Save the `id` value — this is your `<note_id>` for get, update, and delete requests.
+
+---
+
+### List all notes
+
+**Postman:** `GET List Notes` in the Notes folder.
+
+**Git Bash / Terminal:**
+```bash
+curl http://localhost:8000/notes/ \
+  -H "Authorization: Bearer <your_token>"
+```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out
+
+Expected response `200 OK`:
+```json
+{
+    "total": 1,
+    "notes": [
+        {
+            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+            "title": "Shopping",
+            "content": "Buy milk",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        }
+    ]
+}
+```
+
+---
+
+### Search notes
+
+**Postman:** `GET Search Notes` in the Notes folder — change the `search` query param value as needed.
+
+**Git Bash / Terminal:**
+```bash
+curl "http://localhost:8000/notes/?search=milk" \
+  -H "Authorization: Bearer <your_token>"
+```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/` → Try it out → enter search term
+
+Expected response `200 OK` — returns only notes matching the search term in title or content:
+```json
+{
+    "total": 1,
+    "notes": [
+        {
+            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+            "title": "Shopping",
+            "content": "Buy milk",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        }
+    ]
+}
+```
+
+---
+
+### Get a note by ID
+
+**Postman:** `GET Get Note by ID` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
+```bash
+curl http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>"
+```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `GET /notes/{note_id}` → Try it out → enter note ID
+
+Expected response `200 OK`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping",
+    "content": "Buy milk",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:00:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+Returns `404 Not Found` if the note does not exist or belongs to another user:
+```json
+{
+    "detail": "Note not found"
+}
+```
+
+---
+
+### Update a note
+
+**Postman:** `PATCH Update Note` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
+```bash
+curl -X PATCH http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Updated content"}'
+```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `PATCH /notes/{note_id}` → Try it out
+
+Expected response `200 OK` — only the fields you sent are updated, everything else remains unchanged. Notice `updated_at` is now later than `created_at`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping",
+    "content": "Updated content",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:01:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+---
+
+### Delete a note
+
+**Postman:** `DELETE Delete Note` in the Notes folder — uses `{{note_id}}` automatically.
+
+**Git Bash / Terminal:**
+```bash
+curl -X DELETE http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>"
+```
+
+**Browser:** `http://localhost:8000/docs` → Authorize → `DELETE /notes/{note_id}` → Try it out
+
+Expected response `204 No Content` — no response body is returned. A subsequent `GET` on the same `<note_id>` will return `404 Not Found`.
 
 ---
 
