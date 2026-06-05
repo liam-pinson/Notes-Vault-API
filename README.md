@@ -46,7 +46,7 @@ docker-compose down
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+venv\Scripts\activate # Linux: source venv/bin/activate
 pip install -r requirements.txt
 
 # Create the .env file to configure the database path
@@ -59,6 +59,9 @@ uvicorn app.main:app --reload --env-file .env
 ## How to Run Tests
 
 ```bash
+python -m venv venv
+venv\Scripts\activate # Linux: source venv/bin/activate
+pip install -r requirements.txt
 pytest tests/ -v
 ```
 
