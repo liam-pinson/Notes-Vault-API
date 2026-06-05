@@ -25,6 +25,8 @@ Request → FastAPI → JWT Auth → CRUD Layer → SQLite Database
 
 ## How to Run
 
+## Pre-requisite: Download the zip and unpackage or clone the repository and open up the directory via terminal.
+
 ### Option 1 — Docker (Recommended, no Python required)
 
 No additional configuration needed — the database path is set automatically via Docker Compose.
