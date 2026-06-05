@@ -1,0 +1,344 @@
+{
+  "info": {
+    "name": "Notes Vault API",
+    "description": "A complete Postman collection for the Notes Vault API.\n\n## Setup\n1. Import this collection into Postman\n2. Create an environment called 'Notes Vault Local' with a variable `baseUrl` set to `http://localhost:8000`\n3. Run the requests in order — Register first, then Login (the token saves automatically), then Notes endpoints\n\n## Notes\n- The Login request automatically saves your token to the `token` environment variable via a script\n- The Create Note request automatically saves the note ID to the `note_id` environment variable via a script\n- All note endpoints use Bearer token auth inherited from the collection level",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check that the server is running. No authentication required. Expected response: 200 OK\n```json\n{\"status\": \"ok\"}\n```"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"liam\",\n    \"password\": \"securepass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user. Expected response: 201 Created\n```json\n{\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"username\": \"liam\",\n    \"created_at\": \"2024-01-01T00:00:00\"\n}\n```\nReturns 400 if the username is already registered."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.access_token) {",
+                  "    pm.environment.set('token', response.access_token);",
+                  "    console.log('Token saved successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "liam",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "securepass123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "token"]
+            },
+            "description": "Login and receive a JWT token. The token is automatically saved to the `token` environment variable via the Tests script.\n\nExpected response: 200 OK\n```json\n{\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"token_type\": \"bearer\"\n}\n```\nTokens expire after 30 minutes. Re-run this request to get a new token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notes",
+      "item": [
+        {
+          "name": "Create Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.id) {",
+                  "    pm.environment.set('note_id', response.id);",
+                  "    console.log('Note ID saved:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Shopping List\",\n    \"content\": \"Buy milk, eggs, and bread\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notes/",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", ""]
+            },
+            "description": "Create a new note. The note ID is automatically saved to the `note_id` environment variable via the Tests script.\n\n`title` is optional. `content` is required and must be between 1 and 10,000 characters.\n\nExpected response: 201 Created\n```json\n{\n    \"id\": \"f1e2d3c4-b5a6-7890-abcd-ef1234567890\",\n    \"title\": \"Shopping List\",\n    \"content\": \"Buy milk, eggs, and bread\",\n    \"created_at\": \"2024-01-01T00:00:00\",\n    \"updated_at\": \"2024-01-01T00:00:00\",\n    \"owner_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n}\n```\nReturns 422 if content is empty or exceeds 10,000 characters."
+          },
+          "response": []
+        },
+        {
+          "name": "List Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", ""]
+            },
+            "description": "List all notes belonging to the authenticated user. Notes are returned in descending order by creation date.\n\nExpected response: 200 OK\n```json\n{\n    \"total\": 1,\n    \"notes\": [\n        {\n            \"id\": \"f1e2d3c4-b5a6-7890-abcd-ef1234567890\",\n            \"title\": \"Shopping List\",\n            \"content\": \"Buy milk, eggs, and bread\",\n            \"created_at\": \"2024-01-01T00:00:00\",\n            \"updated_at\": \"2024-01-01T00:00:00\",\n            \"owner_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n        }\n    ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/?search=milk",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", ""],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "milk",
+                  "description": "Search term to filter notes by title or content (case-insensitive)"
+                }
+              ]
+            },
+            "description": "Search notes by title or content. The search is case-insensitive and matches partial words.\n\nExpected response: 200 OK — returns only notes matching the search term\n```json\n{\n    \"total\": 1,\n    \"notes\": [\n        {\n            \"id\": \"f1e2d3c4-b5a6-7890-abcd-ef1234567890\",\n            \"title\": \"Shopping List\",\n            \"content\": \"Buy milk, eggs, and bread\",\n            \"created_at\": \"2024-01-01T00:00:00\",\n            \"updated_at\": \"2024-01-01T00:00:00\",\n            \"owner_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n        }\n    ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Note by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{note_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "{{note_id}}"]
+            },
+            "description": "Get a single note by its ID. Only returns the note if it belongs to the authenticated user.\n\nExpected response: 200 OK\n```json\n{\n    \"id\": \"f1e2d3c4-b5a6-7890-abcd-ef1234567890\",\n    \"title\": \"Shopping List\",\n    \"content\": \"Buy milk, eggs, and bread\",\n    \"created_at\": \"2024-01-01T00:00:00\",\n    \"updated_at\": \"2024-01-01T00:00:00\",\n    \"owner_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n}\n```\nReturns 404 if the note does not exist or belongs to another user."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Note",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"Buy milk, eggs, bread, and coffee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{note_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "{{note_id}}"]
+            },
+            "description": "Partially update a note. Only the fields you send will be updated — omitted fields remain unchanged. Both `title` and `content` are optional.\n\nExpected response: 200 OK — notice `updated_at` is later than `created_at`, and the title is unchanged since it was not sent\n```json\n{\n    \"id\": \"f1e2d3c4-b5a6-7890-abcd-ef1234567890\",\n    \"title\": \"Shopping List\",\n    \"content\": \"Buy milk, eggs, bread, and coffee\",\n    \"created_at\": \"2024-01-01T00:00:00\",\n    \"updated_at\": \"2024-01-01T00:01:00\",\n    \"owner_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n}\n```\nReturns 404 if the note does not exist or belongs to another user."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Note",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/{{note_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "{{note_id}}"]
+            },
+            "description": "Delete a note by its ID. Only deletes the note if it belongs to the authenticated user.\n\nExpected response: 204 No Content — no response body is returned.\n\nA subsequent GET request on the same note ID will return 404 Not Found."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Create Note - Empty Content (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notes/",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", ""]
+            },
+            "description": "Demonstrates input validation. Empty content is rejected before hitting the database.\n\nExpected response: 422 Unprocessable Entity\n```json\n{\n    \"detail\": [\n        {\n            \"type\": \"string_too_short\",\n            \"loc\": [\"body\", \"content\"],\n            \"msg\": \"String should have at least 1 character\"\n        }\n    ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Note - No Token (401)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", ""]
+            },
+            "description": "Demonstrates authentication protection. Requests without a token are rejected.\n\nExpected response: 401 Unauthorized\n```json\n{\n    \"detail\": \"Not authenticated\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Note - Not Found (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notes/nonexistent-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["notes", "nonexistent-id"]
+            },
+            "description": "Demonstrates 404 behavior for missing or unauthorized notes. The same response is returned whether the note does not exist or belongs to another user — this avoids leaking information about other users data.\n\nExpected response: 404 Not Found\n```json\n{\n    \"detail\": \"Note not found\"\n}\n```"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "note_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
