@@ -1,4 +1,4 @@
-# Notes Vault API
+# Notes Vault API - Liam Pinson Submission
 
 A secure REST API for creating and managing personal notes, built with FastAPI and SQLite.
 
