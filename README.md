@@ -25,7 +25,7 @@ Request → FastAPI → JWT Auth → CRUD Layer → SQLite Database
 
 ## How to Run
 
-## Pre-requisite: Download the zip and unpackage or clone the repository and open up the directory via terminal.
+### Pre-requisite: Download the zip and unpackage or clone the repository and open up the directory via terminal.
 
 ### Option 1 — Docker (Recommended, no Python required)
 
@@ -69,7 +69,7 @@ Tests use an isolated test database that is created fresh before each test and t
 
 ## API Usage Examples
 
-> Replace `<your_token>` with the token returned from `POST /auth/token`, and `<note_id>` with the UUID returned from `POST /notes/`. The interactive API docs at `http://localhost:8000/docs` can also be used to test all endpoints directly in the browser.
+> The interactive API docs at `http://localhost:8000/docs` can also be used to test all endpoints directly in the browser.
 
 ### Register a user
 
@@ -79,6 +79,17 @@ curl -X POST http://localhost:8000/auth/register \
   -d '{"username": "liam", "password": "securepass123"}'
 ```
 
+Expected response `201 Created`:
+```json
+{
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "username": "liam",
+    "created_at": "2024-01-01T00:00:00"
+}
+```
+
+---
+
 ### Get a token
 
 ```bash
@@ -86,6 +97,18 @@ curl -X POST http://localhost:8000/auth/token \
   -F "username=liam" \
   -F "password=securepass123"
 ```
+
+Expected response `200 OK`:
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "bearer"
+}
+```
+
+> Save the `access_token` value — this is your `<your_token>` for all subsequent requests. It expires after 30 minutes, after which you will need to call this endpoint again.
+
+---
 
 ### Create a note
 
@@ -96,12 +119,47 @@ curl -X POST http://localhost:8000/notes/ \
   -d '{"title": "Shopping", "content": "Buy milk"}'
 ```
 
+Expected response `201 Created`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping",
+    "content": "Buy milk",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:00:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+> Save the `id` value — this is your `<note_id>` for get, update, and delete requests.
+
+---
+
 ### List all notes
 
 ```bash
 curl http://localhost:8000/notes/ \
   -H "Authorization: Bearer <your_token>"
 ```
+
+Expected response `200 OK`:
+```json
+{
+    "total": 1,
+    "notes": [
+        {
+            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+            "title": "Shopping",
+            "content": "Buy milk",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        }
+    ]
+}
+```
+
+---
 
 ### Search notes
 
@@ -110,12 +168,52 @@ curl "http://localhost:8000/notes/?search=milk" \
   -H "Authorization: Bearer <your_token>"
 ```
 
+Expected response `200 OK` — returns only notes matching the search term in title or content:
+```json
+{
+    "total": 1,
+    "notes": [
+        {
+            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+            "title": "Shopping",
+            "content": "Buy milk",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        }
+    ]
+}
+```
+
+---
+
 ### Get a note by ID
 
 ```bash
 curl http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+Expected response `200 OK`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping",
+    "content": "Buy milk",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:00:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+Returns `404 Not Found` if the note does not exist or belongs to another user:
+```json
+{
+    "detail": "Note not found"
+}
+```
+
+---
 
 ### Update a note
 
@@ -126,12 +224,374 @@ curl -X PATCH http://localhost:8000/notes/<note_id> \
   -d '{"content": "Updated content"}'
 ```
 
+Expected response `200 OK` — only the fields you sent are updated, everything else remains unchanged. Notice `updated_at` is now later than `created_at`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping",
+    "content": "Updated content",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:01:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+---
+
 ### Delete a note
 
 ```bash
 curl -X DELETE http://localhost:8000/notes/<note_id> \
   -H "Authorization: Bearer <your_token>"
 ```
+
+Expected response `204 No Content` — no response body is returned. A subsequent `GET` on the same `<note_id>` will return `404 Not Found`.
+
+---
+
+## Postman Collection
+
+A pre-built Postman collection is included in the repository at `notes-vault-postman-collection.json`. It includes every endpoint with correct methods, headers, request bodies, and expected responses pre-configured.
+
+### How to Import
+
+1. Open Postman
+2. Click **Import** in the top left
+3. Drag and drop `notes-vault-postman-collection.json` or click **Upload Files** and select it
+4. The collection will appear as **Notes Vault API** in your sidebar with all endpoints ready to use
+
+### Environment Setup
+
+The collection uses two variables that are populated automatically by scripts — no manual copy-pasting required:
+
+| Variable | Set By | Used By |
+|---|---|---|
+| `baseUrl` | You set this to `http://localhost:8000` | All requests |
+| `token` | Auto-saved after Login | All note endpoints |
+| `note_id` | Auto-saved after Create Note | Get, Update, Delete |
+
+Create an environment in Postman called `Notes Vault Local`, add `baseUrl` with value `http://localhost:8000`, and select it from the environment dropdown in the top right before running requests.
+
+### Included Request Folders
+
+- **Health** — Health check endpoint
+- **Auth** — Register and Login (Login auto-saves token)
+- **Notes** — All five note endpoints (Create auto-saves note ID)
+- **Validation Tests** — Pre-built edge case requests showing 401, 422, and 404 responses
+
+---
+
+## End-to-End Walkthrough
+
+A complete run-through of every endpoint in the order a real user would use them. Run these in sequence after starting the server.
+
+### Step 1 — Confirm the server is running
+
+```bash
+curl http://localhost:8000/health
+```
+
+Expected response `200 OK`:
+```json
+{ "status": "ok" }
+```
+
+---
+
+### Step 2 — Register a new account
+
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "liam", "password": "securepass123"}'
+```
+
+Expected response `201 Created`:
+```json
+{
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "username": "liam",
+    "created_at": "2024-01-01T00:00:00"
+}
+```
+
+---
+
+### Step 3 — Login and get a token
+
+```bash
+curl -X POST http://localhost:8000/auth/token \
+  -F "username=liam" \
+  -F "password=securepass123"
+```
+
+Expected response `200 OK`:
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "bearer"
+}
+```
+
+> Save the `access_token` value and replace `<your_token>` with it in all steps below. Tokens expire after 30 minutes — re-run this step to get a new one.
+
+---
+
+### Step 4 — Confirm auth is required (no token)
+
+```bash
+curl http://localhost:8000/notes/
+```
+
+Expected response `401 Unauthorized` — confirms protected routes are locked without a token:
+```json
+{
+    "detail": "Not authenticated"
+}
+```
+
+---
+
+### Step 5 — Create your first note
+
+```bash
+curl -X POST http://localhost:8000/notes/ \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Shopping List", "content": "Buy milk, eggs, and bread"}'
+```
+
+Expected response `201 Created`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping List",
+    "content": "Buy milk, eggs, and bread",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:00:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+> Save the `id` value and replace `<note_id>` with it in the steps below.
+
+---
+
+### Step 6 — Create a second note
+
+```bash
+curl -X POST http://localhost:8000/notes/ \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Work Tasks", "content": "Finish the API project"}'
+```
+
+Expected response `201 Created`:
+```json
+{
+    "id": "c3d4e5f6-a7b8-9012-cdef-gh3456789012",
+    "title": "Work Tasks",
+    "content": "Finish the API project",
+    "created_at": "2024-01-01T00:00:01",
+    "updated_at": "2024-01-01T00:00:01",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+---
+
+### Step 7 — List all notes
+
+```bash
+curl http://localhost:8000/notes/ \
+  -H "Authorization: Bearer <your_token>"
+```
+
+Expected response `200 OK` — both notes returned, most recent first:
+```json
+{
+    "total": 2,
+    "notes": [
+        {
+            "id": "c3d4e5f6-a7b8-9012-cdef-gh3456789012",
+            "title": "Work Tasks",
+            "content": "Finish the API project",
+            "created_at": "2024-01-01T00:00:01",
+            "updated_at": "2024-01-01T00:00:01",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        },
+        {
+            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+            "title": "Shopping List",
+            "content": "Buy milk, eggs, and bread",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        }
+    ]
+}
+```
+
+---
+
+### Step 8 — Search notes by keyword
+
+```bash
+curl "http://localhost:8000/notes/?search=milk" \
+  -H "Authorization: Bearer <your_token>"
+```
+
+Expected response `200 OK` — only the Shopping List note matches, Work Tasks is excluded:
+```json
+{
+    "total": 1,
+    "notes": [
+        {
+            "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+            "title": "Shopping List",
+            "content": "Buy milk, eggs, and bread",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+            "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        }
+    ]
+}
+```
+
+---
+
+### Step 9 — Get a specific note by ID
+
+```bash
+curl http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>"
+```
+
+Expected response `200 OK`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping List",
+    "content": "Buy milk, eggs, and bread",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:00:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+---
+
+### Step 10 — Update a note (partial update)
+
+Only send the fields you want to change. The title is not sent here so it stays unchanged:
+
+```bash
+curl -X PATCH http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Buy milk, eggs, bread, and coffee"}'
+```
+
+Expected response `200 OK` — content updated, title unchanged, `updated_at` is now later than `created_at`:
+```json
+{
+    "id": "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+    "title": "Shopping List",
+    "content": "Buy milk, eggs, bread, and coffee",
+    "created_at": "2024-01-01T00:00:00",
+    "updated_at": "2024-01-01T00:01:00",
+    "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+---
+
+### Step 11 — Test validation (empty content)
+
+```bash
+curl -X POST http://localhost:8000/notes/ \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"content": ""}'
+```
+
+Expected response `422 Unprocessable Entity` — Pydantic rejects empty content before it reaches the database:
+```json
+{
+    "detail": [
+        {
+            "type": "string_too_short",
+            "loc": ["body", "content"],
+            "msg": "String should have at least 1 character"
+        }
+    ]
+}
+```
+
+---
+
+### Step 12 — Test authorization isolation (another user cannot access your notes)
+
+Register a second user:
+
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "intruder", "password": "securepass123"}'
+```
+
+Login as the second user and save their token:
+
+```bash
+curl -X POST http://localhost:8000/auth/token \
+  -F "username=intruder" \
+  -F "password=securepass123"
+```
+
+Try to access the first user's note using the intruder's token:
+
+```bash
+curl http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <intruder_token>"
+```
+
+Expected response `404 Not Found` — the intruder has a valid token but cannot see another user's notes. The API returns 404 rather than 403 to avoid confirming the note exists at all:
+```json
+{
+    "detail": "Note not found"
+}
+```
+
+---
+
+### Step 13 — Delete a note
+
+Log back in as `liam` to get your token back, then:
+
+```bash
+curl -X DELETE http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>"
+```
+
+Expected response `204 No Content` — no response body returned.
+
+---
+
+### Step 14 — Confirm the note is gone
+
+```bash
+curl http://localhost:8000/notes/<note_id> \
+  -H "Authorization: Bearer <your_token>"
+```
+
+Expected response `404 Not Found` — confirms the note was permanently deleted:
+```json
+{
+    "detail": "Note not found"
+}
+```
+
+---
 
 ## API Response Codes
 
